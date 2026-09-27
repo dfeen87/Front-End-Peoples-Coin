@@ -735,7 +735,7 @@ Found a bug or have a feature request?
 
 ## Roadmap
 
-### Current Version: 1.4.1
+### Current Version: 1.5.0
 
 ### Planned Features
 
@@ -831,7 +831,7 @@ This project was developed with a combination of original ideas, hands‑on codi
 
 **BrightActs Front-End** is a cross-platform Flutter application that enables users to securely submit, track, and visualize Goodwill Actions in real time. It integrates seamlessly with the BrightActs back-end to provide governance participation, analytics, and interactive dashboards while maintaining strong data integrity and secure authentication.
 
-**Project Version**: 1.4.1
+**Project Version**: 1.5.0
 **Last Updated**: February 2026  
 **Maintained by**: BrightActs Development Team
 
