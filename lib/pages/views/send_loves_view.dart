@@ -35,8 +35,9 @@ class _SendLovesViewState extends ConsumerState<SendLovesView> {
   void _pasteFromClipboard() async {
     try {
       final clipboardData = await Clipboard.getData('text/plain');
-      if (clipboardData?.text != null && clipboardData!.text!.isNotEmpty) {
-        _addressController.text = clipboardData.text!;
+      final text = clipboardData?.text?.trim();
+      if (mounted && text != null && text.isNotEmpty) {
+        _addressController.text = text;
       }
     } catch (e) {
       if (mounted) {
@@ -134,7 +135,7 @@ class _SendLovesViewState extends ConsumerState<SendLovesView> {
       ),
     );
 
-    if (confirmed != true) return;
+    if (!mounted || confirmed != true) return;
 
     setState(() {
       _isLoading = true;
@@ -145,7 +146,7 @@ class _SendLovesViewState extends ConsumerState<SendLovesView> {
       final userAccount = ref.read(userAccountProvider);
       final currentWallet = userAccount.value?.walletId;
 
-      if (currentWallet == null || currentWallet?.isEmpty == true) {
+      if (currentWallet == null || currentWallet.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -163,23 +164,23 @@ class _SendLovesViewState extends ConsumerState<SendLovesView> {
           ? _memoController.text.trim() 
           : null;
 
-      // Call the method on the ledgerProvider using ref.read
-      await ref.read(ledgerProvider).sendLoves(
+      // Read the send action without subscribing this widget to provider state.
+      await ref.read(sendLovesProvider)(
             senderWallet: currentWallet,
             recipientWallet: recipient,
-            amount: amount!,
+            amount: amount,
             memo: memo,
           );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Successfully sent $amount Loves!'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Successfully sent $amount Loves!'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
 
       _clearForm();
 
@@ -341,15 +342,16 @@ class _SendLovesViewState extends ConsumerState<SendLovesView> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value?.trim()?.isEmpty == true) {
+                    final address = value?.trim() ?? '';
+                    if (address.isEmpty) {
                       return 'Please enter a recipient address.';
                     }
-                    if (value?.trim()?.length ?? 0 < 10) {
+                    if (address.length < 10) {
                       return 'Please enter a valid address.';
                     }
                     // Check if sending to self
                     final currentWallet = userAccount.value?.walletId;
-                    if (currentWallet != null && value?.trim() == currentWallet) {
+                    if (currentWallet != null && address == currentWallet) {
                       return 'Cannot send Loves to yourself.';
                     }
                     return null;
@@ -383,10 +385,11 @@ class _SendLovesViewState extends ConsumerState<SendLovesView> {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (value) {
-                    if (value == null || value?.trim()?.isEmpty == true) {
+                    final input = value?.trim() ?? '';
+                    if (input.isEmpty) {
                       return 'Please enter an amount.';
                     }
-                    final amount = double.tryParse(value?.trim());
+                    final amount = int.tryParse(input);
                     if (amount == null || amount <= 0) {
                       return 'Please enter a valid amount greater than zero.';
                     }
@@ -405,7 +408,7 @@ class _SendLovesViewState extends ConsumerState<SendLovesView> {
                       value: _showMemo,
                       onChanged: (value) {
                         setState(() {
-                          _showMemo = value == false;
+                          _showMemo = value ?? false;
                           if (!_showMemo) {
                             _memoController.clear();
                           }
